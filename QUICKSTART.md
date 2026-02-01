@@ -4,12 +4,33 @@
 
 This guide shows how to run the fully functional Repo Brain Hospital application based on the MERMEDA v2.2.0 specification.
 
-## Prerequisites
+## Environment Variables
 
-- Node.js v20 or higher
-- npm or yarn
-- Git
-- (Optional) Hardhat/Foundry for Web3 repos
+Create a `.env` or `.env.local` file for configuration (see `.env.example`):
+
+```env
+# API Configuration
+API_PORT=3001          # Backend API server port
+PORT=3001              # Alternative port variable
+
+# Frontend Configuration  
+VITE_DEV_PORT=3000     # Frontend development server port
+VITE_API_PORT=3001     # API port for frontend connection
+
+# Optional: Custom API URL (auto-detected if not set)
+# VITE_API_URL=http://your-api-url.com/api
+
+# Gemini AI (for Oracle Audit feature)
+# GEMINI_API_KEY=your_api_key_here
+
+# GitHub Token (for PR creation)
+# GITHUB_TOKEN=your_token_here
+```
+
+**Note**: The application automatically detects the API URL based on the environment:
+- **Development**: Uses `localhost` with `VITE_API_PORT` (default: 3001)
+- **Production**: Uses the same origin as the frontend
+- **Custom**: Set `VITE_API_URL` to override
 
 ## Installation
 
@@ -19,7 +40,17 @@ This guide shows how to run the fully functional Repo Brain Hospital application
 npm install --legacy-peer-deps
 ```
 
-### 2. Build the Application
+### 2. Configure Environment (Optional)
+
+Copy the example environment file and customize as needed:
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local` to set custom ports or API keys if needed. The application works with defaults if no `.env` file is provided.
+
+### 3. Build the Application
 
 ```bash
 npm run build
@@ -40,8 +71,14 @@ npm run dev
 ```
 
 The application will be available at:
-- Frontend: http://localhost:3000
-- API Server: http://localhost:3001
+- Frontend: http://localhost:3000 (or `VITE_DEV_PORT`)
+- API Server: http://localhost:3001 (or `API_PORT`)
+
+**Custom Ports**: Set environment variables to use different ports:
+```bash
+VITE_DEV_PORT=4000 npm run dev          # Frontend on port 4000
+API_PORT=4001 npm run server            # API on port 4001
+```
 
 ### Option 2: Frontend Only (Demo Mode)
 

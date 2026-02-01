@@ -3,7 +3,7 @@ import cors from 'cors';
 import BrainService from './services/brainService.js';
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = parseInt(process.env.PORT || process.env.API_PORT || '3001', 10);
 
 // Middleware
 app.use(cors());
@@ -228,6 +228,7 @@ app.listen(port, () => {
   console.log(`🚀 Listening on http://localhost:${port}`);
   console.log(`📡 Health check: http://localhost:${port}/api/health`);
   console.log(`🔬 Version: 2.2.0 (MERMEDA)`);
+  console.log(`⚙️  Port configured via: ${process.env.API_PORT ? 'API_PORT' : process.env.PORT ? 'PORT' : 'default (3001)'}`);
 });
 
 export default app;

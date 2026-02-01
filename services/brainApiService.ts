@@ -1,4 +1,27 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const getApiBaseUrl = (): string => {
+  // Priority: Environment variable > Window location for dynamic deployment
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Use current origin with /api path for production deployments
+  if (typeof window !== 'undefined' && window.location.origin) {
+    const origin = window.location.origin;
+    // If running on localhost, use default API port
+    if (origin.includes('localhost')) {
+      const apiPort = import.meta.env.VITE_API_PORT || '3001';
+      return `http://localhost:${apiPort}/api`;
+    }
+    // For production, assume API is at same origin
+    return `${origin}/api`;
+  }
+  
+  // Fallback for non-browser environments
+  const apiPort = import.meta.env.VITE_API_PORT || '3001';
+  return `http://localhost:${apiPort}/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export interface ApiResponse<T = any> {
   success: boolean;
