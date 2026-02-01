@@ -8,6 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "server": "node --loader ts-node/esm server.ts",
+    "server:dev": "nodemon --exec node --loader ts-node/esm server.ts",
     "pack:win": "pkg . --targets node18-win-x64 --output brain.exe",
     "deploy:vercel": "vercel --prod"
   },
@@ -16,6 +18,8 @@
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "lucide-react": "^0.378.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
