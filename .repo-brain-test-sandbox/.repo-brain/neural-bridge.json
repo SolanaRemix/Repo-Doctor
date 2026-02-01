@@ -1,0 +1,10 @@
+{
+  "phase": "neural-bridge",
+  "github_token_status": "missing",
+  "in_github_actions": true,
+  "auth_loop_detected": false,
+  "feedback_loop_status": "healthy",
+  "repair_attempts": 0,
+  "repair_success": false,
+  "timestamp": "2026-02-01T01:30:33Z"
+}

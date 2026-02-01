@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Test sandbox (generated during brain tests)
+.repo-brain-test-sandbox
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

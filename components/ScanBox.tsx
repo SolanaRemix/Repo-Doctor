@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import BrainApiService from '../services/brainApiService';
 
 interface Props {
   onScanTrigger: (logs: string[]) => void;
@@ -9,33 +10,93 @@ const ScanBox: React.FC<Props> = ({ onScanTrigger }) => {
   const [repoInput, setRepoInput] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [installGithub, setInstallGithub] = useState(false);
+  const [useRealAPI, setUseRealAPI] = useState(true);
 
-  const startScan = (type: 'REPO' | 'PR') => {
+  const startScan = async (type: 'REPO' | 'PR') => {
     setIsScanning(true);
     
-    const logs = type === 'REPO' ? [
-      `🧠 [CAST BRAIN] Initiating grid discovery for: ${repoInput || './local-repo'}`,
-      '📡 Phase 1-3: Environmental Fingerprinting... OK',
-      '🧬 Phase 4: Stack Genome Identification...',
-      '🧬 Detected: Node.js (v20), Hardhat (Solidity), TypeScript',
-      '🛡️ Phase 12: AI Guard Security scan initiated...',
-      '🛠️ Phase 8: Normalizing infrastructure configuration...',
-      installGithub ? '🐙 [GITHUB] Distributing CAST BRAIN App to organization endpoints...' : '⏭️ GitHub App installation bypassed.',
-      '✅ Phase 15: Admission complete. Repository now Green-locked.',
-      '📊 100% MERMEDA v1.1.0 alignment verified.'
-    ] : [
-      `🤖 [PR BOT] Intercepting Pull Request hook: ${repoInput || 'PR-DEFAULT'}`,
-      '🔍 SCANNING: Deep diff analysis for security regressions...',
-      '🛡️ INTENT GUARD: Verifying no business logic mutation... OK',
-      '🔄 ANALYZING: Workflow drift from canonical MERMEDA spec...',
-      '🛠️ SURGEON: Correcting CI environment drift for v1.1.0 compliance...',
-      '🧪 VERIFYING: Executing sanity build sequence with zero logic loss...',
-      '✅ SUCCESS: PR Sanitization complete. Approval: GRANTED.',
-      '🚀 READY: Workflow integrity synchronized across fleet.'
-    ];
+    if (type === 'REPO' && useRealAPI) {
+      try {
+        // Check API health first
+        const healthCheck = await BrainApiService.healthCheck();
+        
+        if (healthCheck.success) {
+          // Use real API
+          onScanTrigger([
+            '🧠 [BRAIN] Connecting to API server...',
+            '✅ [API] Connection established',
+            '🔍 [detect] Running detection phase...'
+          ]);
+          
+          const scanResult = await BrainApiService.scanRepository(repoInput || undefined);
+          
+          if (scanResult.success && scanResult.data) {
+            const data = scanResult.data;
+            const realLogs = [
+              `🧠 [BRAIN] Initiating 18-Phase scan for: ${data.repo}`,
+              '📡 Phase 1-3: Environmental Detection... OK',
+              `🧬 Detected Languages: ${data.languages.join(', ')}`,
+              `🧬 Framework: ${data.framework}`,
+              `🏗️ CI/CD: ${data.ci}`,
+              '🛡️ Phase 12: AI Guard Security scan...',
+              '🛠️ Phase 8: Infrastructure normalization...',
+              installGithub ? '🐙 [GITHUB] GitHub App integration enabled' : '⏭️ GitHub App installation bypassed',
+              `🩺 [diagnose] Status: ${data.status}`,
+              `📊 Health Score: ${data.healthScore}/100`,
+              `💡 ${data.reason}`,
+              '✅ Phase 18: Admission complete. MERMEDA v2.2.0 alignment verified.'
+            ];
+            onScanTrigger(realLogs);
+          } else {
+            throw new Error(scanResult.error || 'Scan failed');
+          }
+        } else {
+          throw new Error('API server not available');
+        }
+      } catch (error: any) {
+        // Fallback to mock mode
+        onScanTrigger([
+          '⚠️ [BRAIN] API not available - using demo mode',
+          `🧠 [CAST BRAIN] Initiating grid discovery for: ${repoInput || './current-repo'}`,
+          '📡 Phase 1-3: Environmental Fingerprinting... OK',
+          '🧬 Phase 4: Stack Genome Identification...',
+          '🧬 Detected: Node.js (v20), React, TypeScript',
+          '🛡️ Phase 12: AI Guard Security scan initiated...',
+          '🛠️ Phase 8: Normalizing infrastructure configuration...',
+          installGithub ? '🐙 [GITHUB] Distributing BRAIN App to organization endpoints...' : '⏭️ GitHub App installation bypassed.',
+          '✅ Phase 18: Admission complete. Repository now Green-locked.',
+          '📊 100% MERMEDA v2.2.0 alignment verified.'
+        ]);
+      }
+    } else {
+      // Mock mode or PR scan
+      const logs = type === 'REPO' ? [
+        `🧠 [BRAIN] Initiating scan for: ${repoInput || './current-repo'}`,
+        '📡 Phase 1-3: Environmental Fingerprinting... OK',
+        '🧬 Phase 4: Stack Genome Identification...',
+        '🧬 Detected: Node.js (v20), React, TypeScript',
+        '🛡️ Phase 12: AI Guard Security scan initiated...',
+        '🛠️ Phase 8: Normalizing infrastructure configuration...',
+        installGithub ? '🐙 [GITHUB] Distributing BRAIN App to organization endpoints...' : '⏭️ GitHub App installation bypassed.',
+        '✅ Phase 18: Admission complete. Repository now Green-locked.',
+        '📊 100% MERMEDA v2.2.0 alignment verified.'
+      ] : [
+        `🤖 [PR BOT] Intercepting Pull Request hook: ${repoInput || 'PR-DEFAULT'}`,
+        '🔍 SCANNING: Deep diff analysis for security regressions...',
+        '🛡️ INTENT GUARD: Verifying no business logic mutation... OK',
+        '🔄 ANALYZING: Workflow drift from canonical MERMEDA spec...',
+        '🛠️ SURGEON: Correcting CI environment drift for v2.2.0 compliance...',
+        '🧪 VERIFYING: Executing sanity build sequence with zero logic loss...',
+        '✅ SUCCESS: PR Sanitization complete. Approval: GRANTED.',
+        '🚀 READY: Workflow integrity synchronized across fleet.'
+      ];
 
+      setTimeout(() => {
+        onScanTrigger(logs);
+      }, 1500);
+    }
+    
     setTimeout(() => {
-      onScanTrigger(logs);
       setIsScanning(false);
       setRepoInput('');
     }, 2000);

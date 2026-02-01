@@ -1,0 +1,9 @@
+{
+  "phase": "motor-function",
+  "motor_status": "not_applicable",
+  "framework_detected": "none",
+  "check_performed": false,
+  "compilation_successful": false,
+  "test_successful": "false",
+  "timestamp": "2026-02-01T01:30:33Z"
+}

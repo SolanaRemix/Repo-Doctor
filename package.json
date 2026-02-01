@@ -1,27 +1,38 @@
-
 {
   "name": "repo-brain-hospital",
   "version": "2.2.0",
+  "type": "module",
   "description": "Autonomous Repository Governance Dashboard",
   "main": "index.html",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "server": "node --loader ts-node/esm server.ts",
+    "server:dev": "nodemon --exec node --loader ts-node/esm server.ts",
     "pack:win": "pkg . --targets node18-win-x64 --output brain.exe",
     "deploy:vercel": "vercel --prod"
   },
   "dependencies": {
+    "@google/genai": "^1.30.0",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "lucide-react": "^0.378.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@google/genai": "^1.30.0",
     "recharts": "^2.12.0",
-    "lucide-react": "^0.378.0"
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "vite": "^5.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.1.0",
     "pkg": "^5.8.1",
-    "vercel": "^34.0.0"
+    "vercel": "^34.0.0",
+    "vite": "^5.0.0"
   },
   "bin": "tools/json-cli.js",
   "pkg": {
