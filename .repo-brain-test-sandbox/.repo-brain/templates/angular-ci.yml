@@ -1,0 +1,36 @@
+name: Angular CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Build
+        run: npm run build -- --configuration production
+
+      - name: Test
+        run: |
+          if npm run -s test >/dev/null 2>&1; then
+            npm test -- --watch=false --browsers=ChromeHeadless
+          fi

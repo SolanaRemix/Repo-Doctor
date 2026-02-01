@@ -1,0 +1,11 @@
+{
+  "repoSize": "324M",
+  "fileCount": "15877",
+  "largestDirs": "  - 322M	/home/runner/work/Repo-Doctor/Repo-Doctor/node_modules;  - 896K	/home/runner/work/Repo-Doctor/Repo-Doctor/dist;  - 264K	/home/runner/work/Repo-Doctor/Repo-Doctor/package-lock.json;  - 112K	/home/runner/work/Repo-Doctor/Repo-Doctor/components;  - 24K	/home/runner/work/Repo-Doctor/Repo-Doctor/services;",
+  "commitCount": "3",
+  "lastCommitAge": "2 minutes ago",
+  "workflowCount": "2",
+  "testDurationSec": "0",
+  "buildDurationSec": "4",
+  "captured_at": "2026-02-01T01:19:55Z"
+}

@@ -2,12 +2,12 @@
 **Autonomous Governance Protocol: MERMEDA v2.0 • CyberAI Oracle**
 
 ## 🩺 Active Patient Diagnosis (Oracle Signal)
-- **Repo Signal**: null
-- **Medical Context**: null
-- **Stack Genome**: null (null)
+- **Repo Signal**: RED
+- **Medical Context**: AI Guard flagged unsafe patterns or secrets.
+- **Stack Genome**: node (none)
 
 ## 🛠️ Targeted Prompt Contracts (Surgical Behavioral Enforce)
-1. **Framework CI Enhancement**: strictly adhere to the verified **null** CI contract. For TypeScript stacks, always prioritize `npm run build` to resolve type-conflicts and pass pre-admission tests before suggesting logic changes.
+1. **Framework CI Enhancement**: strictly adhere to the verified **none** CI contract. For TypeScript stacks, always prioritize `npm run build` to resolve type-conflicts and pass pre-admission tests before suggesting logic changes.
 2. **Infrastructure Isolation**: The `.github/workflows/`, `package.json`, and root config files are managed by the Hospital Surgeon. Only suggest modifications to these files if explicitly fixing a CI drift or adding required automation.
 3. **Neural Bridge Grafting**: If a missing `GITHUB_TOKEN` or authentication loop is detected, do not suggest hardcoding keys. Always recommend secure environment variable grafting and Phase 14 Neural Bridge restoration.
 4. **Clean State Restoration**: Prioritize suggestions that return the repository to a 'GREEN-locked' state. If multiple solutions exist, choose the most surgical (least invasive) patch.
@@ -22,6 +22,7 @@
 - **brain.test.sh**: **Target File**: `brain.test.sh`;**Genome Signature**: Standard Stack;CRITICAL: Unsafe shell execution pattern (High risk of Command Injection);CRITICAL: Arbitrary Code Injection vulnerability detected (Usage of eval or dynamic code evaluation);PATHOLOGICAL: OpenAI Secret Key exposure detected;
 - **constants.tsx**: **Target File**: `constants.tsx`;**Genome Signature**: Web3-Enhanced;CRITICAL: Unsafe shell execution pattern (High risk of Command Injection);CRITICAL: Arbitrary Code Injection vulnerability detected (Usage of eval or dynamic code evaluation);PATHOLOGICAL: OpenAI Secret Key exposure detected;
 - **copilot.sh**: **Target File**: `copilot.sh`;**Genome Signature**: Standard Stack;CRITICAL: Unsafe shell execution pattern (High risk of Command Injection);
+- **services/brainService.ts**: **Target File**: `services/brainService.ts`;**Genome Signature**: Standard Stack;CRITICAL: Unsafe shell execution pattern (High risk of Command Injection);
 - **vite.config.ts**: **Target File**: `vite.config.ts`;**Genome Signature**: Standard Stack;PATHOLOGICAL: Google/Gemini API Key exposure detected;
 
 ## 🏥 Hospital Workflow & Automations

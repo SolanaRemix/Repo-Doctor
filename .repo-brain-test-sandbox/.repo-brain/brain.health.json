@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-01-24T15:59:21Z",
+  "mermedaPresent": false,
+  "jqPresent": false,
+  "nodePresent": true,
+  "missingScripts": ["brain.run.sh","brain.detect.sh","brain.scan-actions.sh","brain.diagnose.sh","brain.ai.guard.sh","brain.guard.sh","brain.fleet.sh","brain.autopsy.sh","brain.surgeon.sh","brain.genome.sh"],
+  "notExecutable": [""],
+  "dryRunErrors": []
+}
