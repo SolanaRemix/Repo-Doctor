@@ -62,10 +62,11 @@ vercel --prod
 
 ### 4. Configure Environment Variables
 
-In Vercel dashboard, add these environment variables:
+In Vercel dashboard, add environment variables if needed:
 
-- `NODE_ENV` = `production`
-- `API_PORT` = `3001` (or your preferred port)
+- `NODE_ENV` = `production` (automatically set by Vercel)
+
+**Note**: Port configuration is not needed for Vercel deployments. Vercel serverless functions automatically manage port allocation.
 
 ## Vercel Configuration
 
