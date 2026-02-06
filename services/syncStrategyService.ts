@@ -215,12 +215,13 @@ export class SyncStrategyService {
         }
 
         return await this.performSync(strategy, logs);
-      } catch (error: any) {
-        lastError = error;
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        lastError = error instanceof Error ? error : new Error(message);
         retryCount++;
         
         if (retryCount <= maxRetries) {
-          logs.push(`Sync attempt ${retryCount} failed: ${error.message}`);
+          logs.push(`Sync attempt ${retryCount} failed: ${message}`);
         }
       }
     }
