@@ -10,7 +10,7 @@ The Advanced Synchronization Strategy API provides a robust, configurable system
 - **User-Configurable Strategies**: Define custom synchronization strategies
 - **Robust Error Handling**: Automatic retry with exponential backoff
 - **Status Monitoring**: Real-time progress and status tracking
-- **Filter Support**: Include/exclude patterns for selective synchronization
+- **Planned Filter Support** (not yet implemented): Include/exclude patterns for selective synchronization
 - **Scheduled Execution**: Interval-based automatic synchronization
 - **Public Data API**: Read-only public endpoints for status and configuration
 - **Auto-Fix**: Automated analysis, repair, and patch application
