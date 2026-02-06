@@ -137,7 +137,7 @@ export type SyncMode = 'realtime' | 'scheduled' | 'manual' | 'on-demand';
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'failed' | 'retrying';
 export type SyncTrigger = 'push' | 'commit' | 'interval' | 'webhook' | 'api';
 
-export interface SyncStrategy {
+export interface SyncStrategyConfig {
   id: string;
   name: string;
   mode: SyncMode;
@@ -147,6 +147,10 @@ export interface SyncStrategy {
   retryDelay?: number; // in milliseconds
   targets?: string[]; // target repos or paths
   filters?: SyncFilter[];
+}
+
+export interface SyncStrategy extends SyncStrategyConfig {
+  // Runtime-only callbacks (not serializable)
   onSuccess?: (result: SyncResult) => void;
   onError?: (error: SyncError) => void;
 }

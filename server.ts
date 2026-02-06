@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import BrainService from './services/brainService.js';
 import SyncStrategyService from './services/syncStrategyService.js';
+import { SyncTrigger } from './types.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -12,6 +13,11 @@ const __dirname = dirname(__filename);
 // Read version from package.json
 const packageJson = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf-8'));
 const APP_VERSION = packageJson.version;
+
+// Helper for error messages
+const getErrorMessage = (error: unknown): string => {
+  return error instanceof Error ? error.message : 'Unknown error';
+};
 
 const app = express();
 const port = parseInt(process.env.PORT || process.env.API_PORT || '3001', 10);
@@ -44,10 +50,10 @@ app.post('/api/brain/run', async (req, res) => {
   try {
     const result = await brainService.runFullPipeline();
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: getErrorMessage(error),
       logs: [`Error: ${error.message}`]
     });
   }
@@ -62,10 +68,10 @@ app.post('/api/brain/phase/:phaseName', async (req, res) => {
     const { phaseName } = req.params;
     const result = await brainService.runPhase(phaseName);
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: getErrorMessage(error),
       logs: [`Error: ${error.message}`]
     });
   }
@@ -88,10 +94,10 @@ app.post('/api/brain/scan', async (req, res) => {
         error: 'Failed to scan repository' 
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -112,10 +118,10 @@ app.get('/api/brain/diagnosis', async (req, res) => {
         error: 'No diagnosis found' 
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -136,10 +142,10 @@ app.get('/api/brain/detection', async (req, res) => {
         error: 'No detection data found' 
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -152,10 +158,10 @@ app.get('/api/brain/logs', async (req, res) => {
   try {
     const logs = await brainService.readBrainLogs();
     res.json({ success: true, logs });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: getErrorMessage(error),
       logs: []
     });
   }
@@ -169,10 +175,10 @@ app.post('/api/brain/autopsy', async (req, res) => {
   try {
     const result = await brainService.runAutopsy();
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -185,10 +191,10 @@ app.post('/api/brain/doctor', async (req, res) => {
   try {
     const result = await brainService.runDoctor();
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -210,10 +216,10 @@ app.post('/api/brain/repair-pr', async (req, res) => {
     
     const result = await brainService.createRepairPR(repoName);
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -226,10 +232,10 @@ app.post('/api/brain/normalize', async (req, res) => {
   try {
     const result = await brainService.runPhase('normalize');
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -275,10 +281,10 @@ app.post('/api/brain/auto-fix', async (req, res) => {
         verify: verifyResult.success
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: getErrorMessage(error),
       logs: [`Error during auto-fix: ${error.message}`]
     });
   }
@@ -321,10 +327,10 @@ app.get('/api/public/config', (req, res) => {
         timestamp: new Date().toISOString()
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -362,10 +368,10 @@ app.get('/api/public/status', async (req, res) => {
         } : null
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -382,11 +388,16 @@ app.post('/api/sync/strategy', async (req, res) => {
   try {
     const strategy = req.body;
     const result = await syncService.registerStrategy(strategy);
-    res.json(result);
-  } catch (error: any) {
+    
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -399,10 +410,10 @@ app.get('/api/sync/strategies', (req, res) => {
   try {
     const strategies = syncService.getAllStrategies();
     res.json({ success: true, data: strategies });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -411,16 +422,21 @@ app.get('/api/sync/strategies', (req, res) => {
  * PUT /api/sync/strategy/:strategyId
  * Update a synchronization strategy
  */
-app.put('/api/sync/strategy/:strategyId', (req, res) => {
+app.put('/api/sync/strategy/:strategyId', async (req, res) => {
   try {
     const { strategyId } = req.params;
     const updates = req.body;
-    const result = syncService.updateStrategy(strategyId, updates);
-    res.json(result);
-  } catch (error: any) {
+    const result = await syncService.updateStrategy(strategyId, updates);
+    
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -434,10 +450,10 @@ app.delete('/api/sync/strategy/:strategyId', (req, res) => {
     const { strategyId } = req.params;
     const result = syncService.removeStrategy(strategyId);
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -450,12 +466,19 @@ app.post('/api/sync/execute/:strategyId', async (req, res) => {
   try {
     const { strategyId } = req.params;
     const { trigger } = req.body;
-    const result = await syncService.executeSync(strategyId, trigger);
+    
+    // Validate trigger if provided
+    const validTriggers: SyncTrigger[] = ['push', 'commit', 'interval', 'webhook', 'api'];
+    const syncTrigger: SyncTrigger | undefined = trigger && validTriggers.includes(trigger) 
+      ? trigger as SyncTrigger 
+      : 'api';
+    
+    const result = await syncService.executeSync(strategyId, syncTrigger);
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -469,10 +492,10 @@ app.post('/api/sync/schedule/start/:strategyId', async (req, res) => {
     const { strategyId } = req.params;
     const result = await syncService.startScheduledSync(strategyId);
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -486,10 +509,10 @@ app.post('/api/sync/schedule/stop/:strategyId', (req, res) => {
     const { strategyId } = req.params;
     syncService.stopScheduledSync(strategyId);
     res.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -511,10 +534,10 @@ app.get('/api/sync/monitor/:strategyId', (req, res) => {
         error: 'Monitor not found'
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -527,10 +550,10 @@ app.get('/api/sync/monitors', (req, res) => {
   try {
     const monitors = syncService.getAllMonitors();
     res.json({ success: true, data: monitors });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -544,10 +567,10 @@ app.post('/api/sync/config/load', async (req, res) => {
     const { configPath } = req.body;
     const result = await syncService.loadConfiguration(configPath);
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });
@@ -561,10 +584,10 @@ app.post('/api/sync/config/save', async (req, res) => {
     const { configPath } = req.body;
     const result = await syncService.saveConfiguration(configPath);
     res.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 });

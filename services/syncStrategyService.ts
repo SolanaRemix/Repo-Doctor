@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -7,10 +7,16 @@ import {
   SyncResult,
   SyncError,
   SyncMonitor,
-  SyncConfiguration
+  SyncConfiguration,
+  SyncTrigger
 } from '../types.js';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+
+// Security constants
+const MAX_LOG_LINES = 1000;
+const SAFE_CONFIG_DIR = '.repo-brain';
+const SAFE_CONFIG_FILE = 'sync-config.json';
 
 export class SyncStrategyService {
   private rootPath: string;
@@ -44,6 +50,36 @@ export class SyncStrategyService {
   }
 
   /**
+   * Validate and sanitize target path to prevent directory traversal
+   */
+  private validateTargetPath(target: string): { valid: boolean; error?: string } {
+    // Reject absolute paths
+    if (path.isAbsolute(target)) {
+      return { valid: false, error: 'Target must be a relative path' };
+    }
+
+    // Reject paths with .. or path traversal attempts
+    if (target.includes('..') || target.includes('/./') || target.startsWith('./')) {
+      return { valid: false, error: 'Target contains invalid path segments' };
+    }
+
+    // Reject paths with shell metacharacters
+    if (/[;&|`$(){}[\]<>*?~]/.test(target)) {
+      return { valid: false, error: 'Target contains invalid characters' };
+    }
+
+    // Resolve and ensure path stays within rootPath
+    const resolvedPath = path.resolve(this.rootPath, target);
+    const normalizedRoot = path.resolve(this.rootPath);
+    
+    if (!resolvedPath.startsWith(normalizedRoot + path.sep) && resolvedPath !== normalizedRoot) {
+      return { valid: false, error: 'Target escapes root directory' };
+    }
+
+    return { valid: true };
+  }
+
+  /**
    * Register a new synchronization strategy
    */
   async registerStrategy(strategy: SyncStrategy): Promise<{ success: boolean; error?: string }> {
@@ -53,16 +89,34 @@ export class SyncStrategyService {
         return { success: false, error: 'Strategy ID and name are required' };
       }
 
+      // Validate targets if provided
+      if (strategy.targets) {
+        for (const target of strategy.targets) {
+          const validation = this.validateTargetPath(target);
+          if (!validation.valid) {
+            return { success: false, error: `Invalid target "${target}": ${validation.error}` };
+          }
+        }
+      }
+
+      // Stop existing strategy if re-registering
+      if (this.activeStrategies.has(strategy.id)) {
+        this.stopScheduledSync(strategy.id);
+      }
+
       // Apply defaults
       const fullStrategy: SyncStrategy = {
         ...strategy,
         maxRetries: strategy.maxRetries ?? this.configuration.globalRetryPolicy?.maxRetries ?? 3,
-        retryDelay: strategy.retryDelay ?? this.configuration.globalRetryPolicy?.retryDelay ?? 1000
+        retryDelay: strategy.retryDelay ?? this.configuration.globalRetryPolicy?.retryDelay ?? 1000,
+        // Remove callback functions for security (cannot be serialized)
+        onSuccess: undefined,
+        onError: undefined
       };
 
       this.activeStrategies.set(strategy.id, fullStrategy);
       
-      // Initialize monitor
+      // Initialize or reset monitor
       this.monitors.set(strategy.id, {
         strategyId: strategy.id,
         status: 'idle',
@@ -89,7 +143,7 @@ export class SyncStrategyService {
   /**
    * Execute synchronization for a specific strategy
    */
-  async executeSync(strategyId: string, trigger?: string): Promise<SyncResult> {
+  async executeSync(strategyId: string, trigger?: SyncTrigger): Promise<SyncResult> {
     const strategy = this.activeStrategies.get(strategyId);
     
     if (!strategy) {
@@ -108,6 +162,16 @@ export class SyncStrategyService {
       });
     }
 
+    // Check if already running (prevent overlapping executions)
+    const currentMonitor = this.monitors.get(strategyId);
+    if (currentMonitor && (currentMonitor.status === 'syncing' || currentMonitor.status === 'retrying')) {
+      return this.createErrorResult(strategyId, {
+        code: 'SYNC_IN_PROGRESS',
+        message: `Sync already in progress for strategy ${strategyId}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     const startTime = Date.now();
     const logs: string[] = [];
     
@@ -115,11 +179,11 @@ export class SyncStrategyService {
     this.updateMonitor(strategyId, {
       status: 'syncing',
       startTime: new Date().toISOString(),
-      logs: [`Sync started (trigger: ${trigger || 'manual'})`]
+      logs: [`Sync started (trigger: ${trigger || 'api'})`]
     });
 
     logs.push(`Starting sync for strategy: ${strategy.name}`);
-    logs.push(`Mode: ${strategy.mode}, Trigger: ${trigger || 'manual'}`);
+    logs.push(`Mode: ${strategy.mode}, Trigger: ${trigger || 'api'}`);
 
     try {
       // Execute sync with retry logic
@@ -147,30 +211,26 @@ export class SyncStrategyService {
         logs
       };
 
-      // Call success callback if defined
-      if (strategy.onSuccess) {
-        strategy.onSuccess(syncResult);
-      }
-
       this.log('info', `Sync completed for ${strategy.name}: ${result.itemsSynced} items synced`);
       return syncResult;
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       const duration = Date.now() - startTime;
+      const message = error instanceof Error ? error.message : 'Unknown error';
       
       const syncError: SyncError = {
         code: 'SYNC_FAILED',
-        message: error.message,
+        message,
         timestamp: new Date().toISOString(),
         retry: true,
-        details: error
+        details: error instanceof Error ? error.stack : String(error)
       };
 
       // Update monitor
       this.updateMonitor(strategyId, {
         status: 'failed',
         lastUpdate: new Date().toISOString(),
-        logs: [...logs, `Sync failed: ${error.message}`]
+        logs: [...logs, `Sync failed: ${message}`]
       });
 
       const syncResult: SyncResult = {
@@ -184,12 +244,7 @@ export class SyncStrategyService {
         error: syncError
       };
 
-      // Call error callback if defined
-      if (strategy.onError) {
-        strategy.onError(syncError);
-      }
-
-      this.log('error', `Sync failed for ${strategy.name}: ${error.message}`);
+      this.log('error', `Sync failed for ${strategy.name}: ${message}`);
       return syncResult;
     }
   }
@@ -253,15 +308,16 @@ export class SyncStrategyService {
             await this.syncPluginsToTarget(target, logs);
             repos.push(target);
             itemsSynced++;
-          } catch (error: any) {
-            logs.push(`Failed to sync to ${target}: ${error.message}`);
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            logs.push(`Failed to sync to ${target}: ${message}`);
             itemsFailed++;
           }
         }
       } else {
-        // Run full fleet sync
+        // Run full fleet sync using execFile (safer than exec)
         logs.push('Running full fleet synchronization');
-        const { stdout, stderr } = await execAsync(`bash "${fleetScript}" --sync-plugins`, {
+        const { stdout, stderr } = await execFileAsync('bash', [fleetScript, '--sync-plugins'], {
           cwd: this.rootPath,
           env: { ...process.env, JQ_BIN: 'jq' }
         });
@@ -281,8 +337,9 @@ export class SyncStrategyService {
       }
 
       return { itemsSynced, itemsFailed, repos: repos.filter(Boolean) };
-    } catch (error: any) {
-      logs.push(`Sync operation failed: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      logs.push(`Sync operation failed: ${message}`);
       throw error;
     }
   }
@@ -291,6 +348,12 @@ export class SyncStrategyService {
    * Sync plugins to a specific target
    */
   private async syncPluginsToTarget(target: string, logs: string[]): Promise<void> {
+    // Validate target path
+    const validation = this.validateTargetPath(target);
+    if (!validation.valid) {
+      throw new Error(`Invalid target: ${validation.error}`);
+    }
+
     const targetPath = path.join(this.rootPath, target);
     const targetBrainPath = path.join(targetPath, '.repo-brain');
     
@@ -304,11 +367,16 @@ export class SyncStrategyService {
     // Create .repo-brain directory
     await fs.mkdir(targetBrainPath, { recursive: true });
     
-    // Copy brain scripts
-    const { stdout } = await execAsync(
-      `rsync -a "${this.brainPath}/" "${targetBrainPath}/" --exclude ".git"`,
-      { cwd: this.rootPath }
-    );
+    // Copy brain scripts using execFile (safe from command injection)
+    await execFileAsync('rsync', [
+      '-a',
+      `${this.brainPath}/`,
+      `${targetBrainPath}/`,
+      '--exclude',
+      '.git'
+    ], {
+      cwd: this.rootPath
+    });
     
     logs.push(`Synced plugins to ${target}`);
   }
@@ -321,6 +389,10 @@ export class SyncStrategyService {
     
     if (!strategy) {
       return { success: false, error: 'Strategy not found' };
+    }
+
+    if (!strategy.enabled) {
+      return { success: false, error: 'Cannot start scheduled sync for disabled strategy' };
     }
 
     if (strategy.mode !== 'scheduled') {
@@ -337,8 +409,9 @@ export class SyncStrategyService {
     // Start new interval
     const intervalMs = strategy.interval * 1000;
     const interval = setInterval(() => {
-      this.executeSync(strategyId, 'scheduled').catch(error => {
-        this.log('error', `Scheduled sync error for ${strategyId}: ${error.message}`);
+      this.executeSync(strategyId, 'interval').catch(error => {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        this.log('error', `Scheduled sync error for ${strategyId}: ${message}`);
       });
     }, intervalMs);
 
@@ -384,21 +457,41 @@ export class SyncStrategyService {
   /**
    * Update strategy configuration
    */
-  updateStrategy(strategyId: string, updates: Partial<SyncStrategy>): { success: boolean; error?: string } {
+  async updateStrategy(strategyId: string, updates: Partial<SyncStrategy>): Promise<{ success: boolean; error?: string }> {
     const strategy = this.activeStrategies.get(strategyId);
     
     if (!strategy) {
       return { success: false, error: 'Strategy not found' };
     }
 
-    const updatedStrategy = { ...strategy, ...updates, id: strategyId };
+    // Validate targets if being updated
+    if (updates.targets) {
+      for (const target of updates.targets) {
+        const validation = this.validateTargetPath(target);
+        if (!validation.valid) {
+          return { success: false, error: `Invalid target "${target}": ${validation.error}` };
+        }
+      }
+    }
+
+    const updatedStrategy = {
+      ...strategy,
+      ...updates,
+      id: strategyId,
+      // Remove callbacks (cannot be serialized)
+      onSuccess: undefined,
+      onError: undefined
+    };
     this.activeStrategies.set(strategyId, updatedStrategy);
 
     // Restart scheduled sync if it was running
     if (strategy.mode === 'scheduled' && this.intervals.has(strategyId)) {
       this.stopScheduledSync(strategyId);
-      if (updatedStrategy.enabled) {
-        this.startScheduledSync(strategyId);
+      if (updatedStrategy.enabled && updatedStrategy.mode === 'scheduled') {
+        const result = await this.startScheduledSync(strategyId);
+        if (!result.success) {
+          return result;
+        }
       }
     }
 
@@ -423,16 +516,23 @@ export class SyncStrategyService {
   }
 
   /**
-   * Update monitor state
+   * Update monitor state with log size limiting
    */
   private updateMonitor(strategyId: string, updates: Partial<SyncMonitor>): void {
     const monitor = this.monitors.get(strategyId);
     if (monitor) {
+      let updatedLogs = updates.logs ? [...monitor.logs, ...updates.logs] : monitor.logs;
+      
+      // Limit log size to prevent unbounded growth
+      if (updatedLogs.length > MAX_LOG_LINES) {
+        updatedLogs = updatedLogs.slice(-MAX_LOG_LINES);
+      }
+      
       this.monitors.set(strategyId, {
         ...monitor,
         ...updates,
         lastUpdate: new Date().toISOString(),
-        logs: updates.logs ? [...monitor.logs, ...updates.logs] : monitor.logs
+        logs: updatedLogs
       });
     }
   }
@@ -484,11 +584,27 @@ export class SyncStrategyService {
   }
 
   /**
-   * Load configuration from file
+   * Load configuration from file (restricted to safe directory)
    */
   async loadConfiguration(configPath?: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const filePath = configPath || path.join(this.brainPath, 'sync-config.json');
+      // Restrict to safe directory only
+      let filePath: string;
+      if (configPath) {
+        // Reject absolute paths
+        if (path.isAbsolute(configPath)) {
+          return { success: false, error: 'Absolute paths not allowed' };
+        }
+        // Reject path traversal
+        if (configPath.includes('..')) {
+          return { success: false, error: 'Path traversal not allowed' };
+        }
+        // Only allow files in the safe config directory
+        filePath = path.join(this.brainPath, path.basename(configPath));
+      } else {
+        filePath = path.join(this.brainPath, SAFE_CONFIG_FILE);
+      }
+      
       const data = await fs.readFile(filePath, 'utf-8');
       const config: SyncConfiguration = JSON.parse(data);
       
@@ -501,17 +617,33 @@ export class SyncStrategyService {
       
       this.log('info', `Configuration loaded from ${filePath}`);
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
   /**
-   * Save configuration to file
+   * Save configuration to file (restricted to safe directory)
    */
   async saveConfiguration(configPath?: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const filePath = configPath || path.join(this.brainPath, 'sync-config.json');
+      // Restrict to safe directory only
+      let filePath: string;
+      if (configPath) {
+        // Reject absolute paths
+        if (path.isAbsolute(configPath)) {
+          return { success: false, error: 'Absolute paths not allowed' };
+        }
+        // Reject path traversal
+        if (configPath.includes('..')) {
+          return { success: false, error: 'Path traversal not allowed' };
+        }
+        // Only allow files in the safe config directory
+        filePath = path.join(this.brainPath, path.basename(configPath));
+      } else {
+        filePath = path.join(this.brainPath, SAFE_CONFIG_FILE);
+      }
       
       // Update strategies in configuration
       this.configuration.strategies = Array.from(this.activeStrategies.values());
@@ -520,8 +652,9 @@ export class SyncStrategyService {
       
       this.log('info', `Configuration saved to ${filePath}`);
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     }
   }
 
