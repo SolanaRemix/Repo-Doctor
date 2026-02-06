@@ -281,11 +281,11 @@ The synchronization service integrates seamlessly with:
 
 ## Security
 
-- ✅ No security vulnerabilities (CodeQL scan passed)
-- ✅ Proper input validation on all endpoints
-- ✅ No hardcoded secrets or credentials
-- ✅ Graceful error handling without data exposure
-- ✅ Follows existing security patterns
+- ✅ No new hardcoded secrets or credentials introduced
+- ✅ Reuses existing authentication/authorization and security middleware where applicable
+- ✅ Graceful error handling without intentional sensitive data exposure
+- ⚠️ Comprehensive input validation and stricter `configPath` access controls are recommended future hardening steps
+- ⚠️ A full security review (including fresh CodeQL scans) should be completed before treating this as production-grade security
 
 ## Next Steps
 
