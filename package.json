@@ -6,7 +6,7 @@
   "main": "index.html",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && tsc server.ts --outDir dist/server --module nodenext --moduleResolution nodenext",
+    "build": "vite build",
     "preview": "vite preview",
     "server": "node --loader ts-node/esm server.ts",
     "server:dev": "nodemon --exec node --loader ts-node/esm server.ts",

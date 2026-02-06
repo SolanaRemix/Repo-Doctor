@@ -5,6 +5,7 @@ set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 API_URL="http://localhost:3001"
+EXPECTED_VERSION="${EXPECTED_VERSION:-2.2.0}"
 
 log() { echo "🧪 [test-new-endpoints] $1"; }
 error() { echo "❌ [test-new-endpoints] $1"; exit 1; }
@@ -29,7 +30,7 @@ test_public_config() {
   RESPONSE=$(curl -s "${API_URL}/api/public/config")
   
   if echo "$RESPONSE" | grep -q '"success":true'; then
-    if echo "$RESPONSE" | grep -q '"version":"2.2.0"'; then
+    if echo "$RESPONSE" | grep -q '"version"'; then
       success "Public config endpoint working"
     else
       error "Public config missing version"

@@ -2,6 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import BrainService from './services/brainService.js';
 import SyncStrategyService from './services/syncStrategyService.js';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Read version from package.json
+const packageJson = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf-8'));
+const APP_VERSION = packageJson.version;
 
 const app = express();
 const port = parseInt(process.env.PORT || process.env.API_PORT || '3001', 10);
@@ -21,7 +31,7 @@ const syncService = new SyncStrategyService();
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
-    version: '2.2.0',
+    version: APP_VERSION,
     service: 'repo-brain-hospital-api'
   });
 });
@@ -307,7 +317,7 @@ app.get('/api/public/config', (req, res) => {
       data: {
         strategies: publicStrategies,
         monitors: publicMonitors,
-        version: '2.2.0',
+        version: APP_VERSION,
         timestamp: new Date().toISOString()
       }
     });
@@ -336,7 +346,7 @@ app.get('/api/public/status', async (req, res) => {
       data: {
         system: {
           status: diagnosis?.status || 'unknown',
-          version: '2.2.0',
+          version: APP_VERSION,
           timestamp: new Date().toISOString()
         },
         sync: {
@@ -564,7 +574,7 @@ const server = app.listen(port, () => {
   console.log(`🧠 REPO BRAIN HOSPITAL API Server`);
   console.log(`🚀 Listening on http://localhost:${port}`);
   console.log(`📡 Health check: http://localhost:${port}/api/health`);
-  console.log(`🔬 Version: 2.2.0 (MERMEDA)`);
+  console.log(`🔬 Version: ${APP_VERSION} (MERMEDA)`);
   console.log(`⚙️  Port configured via: ${process.env.API_PORT ? 'API_PORT' : process.env.PORT ? 'PORT' : 'default (3001)'}`);
   console.log(`🔄 Sync API: http://localhost:${port}/api/sync`);
 });
