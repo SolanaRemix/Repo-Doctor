@@ -7,9 +7,7 @@ import {
   SyncResult,
   SyncError,
   SyncMonitor,
-  SyncConfiguration,
-  SyncStatus,
-  SyncMode
+  SyncConfiguration
 } from '../types.js';
 
 const execAsync = promisify(exec);
