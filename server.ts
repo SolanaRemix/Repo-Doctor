@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import BrainService from './services/brainService.js';
+import SyncStrategyService from './services/syncStrategyService.js';
 
 const app = express();
 const port = parseInt(process.env.PORT || process.env.API_PORT || '3001', 10);
@@ -9,8 +10,9 @@ const port = parseInt(process.env.PORT || process.env.API_PORT || '3001', 10);
 app.use(cors());
 app.use(express.json());
 
-// Initialize brain service
+// Initialize services
 const brainService = new BrainService();
+const syncService = new SyncStrategyService();
 
 /**
  * GET /api/health
@@ -222,13 +224,230 @@ app.post('/api/brain/normalize', async (req, res) => {
   }
 });
 
+// ===================================================================
+// SYNCHRONIZATION STRATEGY ENDPOINTS
+// ===================================================================
+
+/**
+ * POST /api/sync/strategy
+ * Register a new synchronization strategy
+ */
+app.post('/api/sync/strategy', async (req, res) => {
+  try {
+    const strategy = req.body;
+    const result = await syncService.registerStrategy(strategy);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/sync/strategies
+ * Get all registered strategies
+ */
+app.get('/api/sync/strategies', (req, res) => {
+  try {
+    const strategies = syncService.getAllStrategies();
+    res.json({ success: true, data: strategies });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/sync/strategy/:strategyId
+ * Update a synchronization strategy
+ */
+app.put('/api/sync/strategy/:strategyId', (req, res) => {
+  try {
+    const { strategyId } = req.params;
+    const updates = req.body;
+    const result = syncService.updateStrategy(strategyId, updates);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/sync/strategy/:strategyId
+ * Remove a synchronization strategy
+ */
+app.delete('/api/sync/strategy/:strategyId', (req, res) => {
+  try {
+    const { strategyId } = req.params;
+    const result = syncService.removeStrategy(strategyId);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/sync/execute/:strategyId
+ * Execute synchronization for a specific strategy
+ */
+app.post('/api/sync/execute/:strategyId', async (req, res) => {
+  try {
+    const { strategyId } = req.params;
+    const { trigger } = req.body;
+    const result = await syncService.executeSync(strategyId, trigger);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/sync/schedule/start/:strategyId
+ * Start scheduled synchronization
+ */
+app.post('/api/sync/schedule/start/:strategyId', async (req, res) => {
+  try {
+    const { strategyId } = req.params;
+    const result = await syncService.startScheduledSync(strategyId);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/sync/schedule/stop/:strategyId
+ * Stop scheduled synchronization
+ */
+app.post('/api/sync/schedule/stop/:strategyId', (req, res) => {
+  try {
+    const { strategyId } = req.params;
+    syncService.stopScheduledSync(strategyId);
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/sync/monitor/:strategyId
+ * Get synchronization monitor status for a strategy
+ */
+app.get('/api/sync/monitor/:strategyId', (req, res) => {
+  try {
+    const { strategyId } = req.params;
+    const monitor = syncService.getMonitor(strategyId);
+    
+    if (monitor) {
+      res.json({ success: true, data: monitor });
+    } else {
+      res.status(404).json({
+        success: false,
+        error: 'Monitor not found'
+      });
+    }
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/sync/monitors
+ * Get all synchronization monitors
+ */
+app.get('/api/sync/monitors', (req, res) => {
+  try {
+    const monitors = syncService.getAllMonitors();
+    res.json({ success: true, data: monitors });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/sync/config/load
+ * Load synchronization configuration from file
+ */
+app.post('/api/sync/config/load', async (req, res) => {
+  try {
+    const { configPath } = req.body;
+    const result = await syncService.loadConfiguration(configPath);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/sync/config/save
+ * Save synchronization configuration to file
+ */
+app.post('/api/sync/config/save', async (req, res) => {
+  try {
+    const { configPath } = req.body;
+    const result = await syncService.saveConfiguration(configPath);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Start server
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`🧠 REPO BRAIN HOSPITAL API Server`);
   console.log(`🚀 Listening on http://localhost:${port}`);
   console.log(`📡 Health check: http://localhost:${port}/api/health`);
   console.log(`🔬 Version: 2.2.0 (MERMEDA)`);
   console.log(`⚙️  Port configured via: ${process.env.API_PORT ? 'API_PORT' : process.env.PORT ? 'PORT' : 'default (3001)'}`);
+  console.log(`🔄 Sync API: http://localhost:${port}/api/sync`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM signal received: closing HTTP server');
+  syncService.cleanup();
+  server.close(() => {
+    console.log('✅ HTTP server closed');
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT signal received: closing HTTP server');
+  syncService.cleanup();
+  server.close(() => {
+    console.log('✅ HTTP server closed');
+  });
 });
 
 export default app;
