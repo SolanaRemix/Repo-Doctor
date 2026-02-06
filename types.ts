@@ -174,7 +174,7 @@ export interface SyncError {
   message: string;
   timestamp: string;
   retry?: boolean;
-  details?: any;
+  details?: unknown;
 }
 
 export interface SyncMonitor {
