@@ -6,14 +6,7 @@
       "mode": "realtime",
       "enabled": true,
       "maxRetries": 3,
-      "retryDelay": 2000,
-      "filters": [
-        {
-          "type": "include",
-          "pattern": "*/.repo-brain/*",
-          "scope": "directories"
-        }
-      ]
+      "retryDelay": 2000
     },
     {
       "id": "scheduled-plugin-sync",
