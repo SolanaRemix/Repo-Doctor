@@ -224,6 +224,142 @@ app.post('/api/brain/normalize', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/brain/auto-fix
+ * Run full analysis, repair, and apply patches automatically
+ */
+app.post('/api/brain/auto-fix', async (req, res) => {
+  try {
+    const logs: string[] = [];
+    logs.push('🔧 Starting automatic analysis and repair...');
+
+    // Step 1: Run diagnosis
+    logs.push('📊 Running diagnosis...');
+    const diagResult = await brainService.runPhase('diagnose');
+    logs.push(...diagResult.logs);
+
+    // Step 2: Run doctor
+    logs.push('🩺 Running health check...');
+    const doctorResult = await brainService.runDoctor();
+    logs.push(...doctorResult.logs);
+
+    // Step 3: Run surgeon (repair)
+    logs.push('🔧 Applying repairs...');
+    const surgeonResult = await brainService.runPhase('surgeon');
+    logs.push(...surgeonResult.logs);
+
+    // Step 4: Verify fixes
+    logs.push('✅ Verifying fixes...');
+    const verifyResult = await brainService.runPhase('verify');
+    logs.push(...verifyResult.logs);
+
+    logs.push('✅ Automatic fix completed');
+
+    res.json({
+      success: true,
+      logs,
+      phases: {
+        diagnosis: diagResult.success,
+        doctor: doctorResult.success,
+        surgeon: surgeonResult.success,
+        verify: verifyResult.success
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      logs: [`Error during auto-fix: ${error.message}`]
+    });
+  }
+});
+
+// ===================================================================
+// PUBLIC DATA API ENDPOINTS
+// ===================================================================
+
+/**
+ * GET /api/public/config
+ * Get public sync configuration and strategies (read-only)
+ */
+app.get('/api/public/config', (req, res) => {
+  try {
+    const strategies = syncService.getAllStrategies();
+    const monitors = syncService.getAllMonitors();
+    
+    // Filter sensitive data - only return public info
+    const publicStrategies = strategies.map(s => ({
+      id: s.id,
+      name: s.name,
+      mode: s.mode,
+      enabled: s.enabled,
+      interval: s.interval
+    }));
+
+    const publicMonitors = monitors.map(m => ({
+      strategyId: m.strategyId,
+      status: m.status,
+      lastUpdate: m.lastUpdate
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        strategies: publicStrategies,
+        monitors: publicMonitors,
+        version: '2.2.0',
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/public/status
+ * Get public system status and health metrics
+ */
+app.get('/api/public/status', async (req, res) => {
+  try {
+    const diagnosis = await brainService.getDiagnosis();
+    const monitors = syncService.getAllMonitors();
+    
+    const activeStrategies = monitors.filter(m => m.status === 'syncing').length;
+    const failedStrategies = monitors.filter(m => m.status === 'failed').length;
+
+    res.json({
+      success: true,
+      data: {
+        system: {
+          status: diagnosis?.status || 'unknown',
+          version: '2.2.0',
+          timestamp: new Date().toISOString()
+        },
+        sync: {
+          total: monitors.length,
+          active: activeStrategies,
+          failed: failedStrategies,
+          idle: monitors.length - activeStrategies - failedStrategies
+        },
+        health: diagnosis ? {
+          framework: diagnosis.framework,
+          ci: diagnosis.ci,
+          healthScore: diagnosis.healthScore
+        } : null
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // ===================================================================
 // SYNCHRONIZATION STRATEGY ENDPOINTS
 // ===================================================================

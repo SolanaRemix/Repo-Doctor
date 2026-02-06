@@ -12,6 +12,8 @@ The Advanced Synchronization Strategy API provides a robust, configurable system
 - **Status Monitoring**: Real-time progress and status tracking
 - **Filter Support**: Include/exclude patterns for selective synchronization
 - **Scheduled Execution**: Interval-based automatic synchronization
+- **Public Data API**: Read-only public endpoints for status and configuration
+- **Auto-Fix**: Automated analysis, repair, and patch application
 
 ## Synchronization Modes
 
@@ -28,6 +30,101 @@ Synchronization triggered manually via API call.
 Synchronization executed on specific triggers (e.g., webhook, API).
 
 ## API Endpoints
+
+### Public API Endpoints (Read-Only)
+
+#### Get Public Configuration
+
+**GET** `/api/public/config`
+
+Get public synchronization configuration and strategies (read-only, no authentication required).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "strategies": [
+      {
+        "id": "hourly-fleet-sync",
+        "name": "Hourly Fleet Synchronization",
+        "mode": "scheduled",
+        "enabled": true,
+        "interval": 3600
+      }
+    ],
+    "monitors": [
+      {
+        "strategyId": "hourly-fleet-sync",
+        "status": "success",
+        "lastUpdate": "2026-02-06T20:00:00.000Z"
+      }
+    ],
+    "version": "2.2.0",
+    "timestamp": "2026-02-06T20:00:00.000Z"
+  }
+}
+```
+
+#### Get Public Status
+
+**GET** `/api/public/status`
+
+Get public system status and health metrics (read-only, no authentication required).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "system": {
+      "status": "GREEN",
+      "version": "2.2.0",
+      "timestamp": "2026-02-06T20:00:00.000Z"
+    },
+    "sync": {
+      "total": 5,
+      "active": 1,
+      "failed": 0,
+      "idle": 4
+    },
+    "health": {
+      "framework": "react",
+      "ci": "github-actions",
+      "healthScore": 85
+    }
+  }
+}
+```
+
+### Brain Operations
+
+#### Auto-Fix
+
+**POST** `/api/brain/auto-fix`
+
+Run full analysis, repair, and apply patches automatically. This endpoint executes diagnosis, doctor, surgeon, and verify phases in sequence.
+
+**Response:**
+```json
+{
+  "success": true,
+  "logs": [
+    "🔧 Starting automatic analysis and repair...",
+    "📊 Running diagnosis...",
+    "🩺 Running health check...",
+    "🔧 Applying repairs...",
+    "✅ Verifying fixes...",
+    "✅ Automatic fix completed"
+  ],
+  "phases": {
+    "diagnosis": true,
+    "doctor": true,
+    "surgeon": true,
+    "verify": true
+  }
+}
+```
 
 ### Register a Strategy
 
