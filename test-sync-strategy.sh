@@ -4,7 +4,6 @@ set -euo pipefail
 # REPO BRAIN HOSPITAL - Sync Strategy Service Tests
 # Purpose: Validates the synchronization strategy service functionality
 
-ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 API_URL="http://localhost:3001"
 
 log() { echo "🧪 [sync-test] $1"; }
