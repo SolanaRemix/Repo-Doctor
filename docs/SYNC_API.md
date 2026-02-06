@@ -18,16 +18,16 @@ The Advanced Synchronization Strategy API provides a robust, configurable system
 ## Synchronization Modes
 
 ### Realtime
-Synchronization triggered immediately on events (e.g., push, commit).
+Conceptual mode intended for event-driven synchronization (e.g., push, commit). Currently, realtime behavior must be emulated via scheduled runs or manual `/execute/:id` calls; direct event/webhook triggering is not yet implemented.
 
 ### Scheduled
 Automatic synchronization at specified intervals (in seconds).
 
 ### Manual
-Synchronization triggered manually via API call.
+Synchronization triggered manually via API call (e.g., `/execute/:id`).
 
 ### On-Demand
-Synchronization executed on specific triggers (e.g., webhook, API).
+Synchronization triggered manually via the execution API (e.g., `/execute/:id`). Webhook- or event-based on-demand triggering is planned but not yet implemented.
 
 ## API Endpoints
 
