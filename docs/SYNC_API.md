@@ -142,21 +142,24 @@ Register a new synchronization strategy.
   "interval": 3600,
   "maxRetries": 3,
   "retryDelay": 1000,
-  "targets": ["repo1", "repo2"],
-  "filters": [
-    {
-      "type": "include",
-      "pattern": "*.ts",
-      "scope": "files"
-    }
-  ]
+  "targets": ["repo1", "repo2"]
 }
 ```
+
+**Note**: `targets` must be relative paths without `..` or shell metacharacters. Absolute paths are rejected for security.
 
 **Response:**
 ```json
 {
   "success": true
+}
+```
+
+**Error Response (400 Bad Request):**
+```json
+{
+  "success": false,
+  "error": "Invalid target \"../escape\": Target contains invalid path segments"
 }
 ```
 
@@ -513,3 +516,50 @@ Consider:
 - Adjusting retry delay
 - Checking network connectivity
 - Reviewing error logs in monitor
+
+## Security
+
+The synchronization service implements multiple security layers:
+
+### Path Validation
+
+All target paths are validated to prevent directory traversal:
+- **Absolute paths rejected**: Only relative paths allowed
+- **Traversal blocked**: Paths containing `..` are rejected
+- **Metacharacter filtering**: Shell metacharacters like `|`, `;`, `$` are blocked
+- **Root containment**: All resolved paths must stay within the repository root
+
+### Command Injection Prevention
+
+- Uses `execFile()` instead of `exec()` to avoid shell interpretation
+- All commands use argument arrays, not string concatenation
+- No user input is ever passed to a shell
+
+### File Access Restrictions
+
+Configuration load/save operations are restricted:
+- **Directory restriction**: Only `.repo-brain/` directory accessible
+- **Path sanitization**: `path.basename()` strips directory traversal
+- **No absolute paths**: User-provided paths must be relative
+- **Filename validation**: Rejects invalid characters and patterns
+
+### Resource Limits
+
+- **Log size limiting**: Monitor logs capped at 1000 lines to prevent memory exhaustion
+- **Execution locking**: Prevents overlapping sync executions for the same strategy
+- **Interval validation**: Scheduled syncs validate enabled state before starting
+
+### Input Validation
+
+- **Strategy validation**: ID, name, and mode are required and validated
+- **Target validation**: All targets validated before registration
+- **Trigger validation**: Only valid `SyncTrigger` values accepted
+- **HTTP status codes**: 400 for validation errors, 500 for server errors
+
+### Best Practices
+
+1. **Use relative target paths** like `"repo1"`, `"projects/repo2"`
+2. **Avoid special characters** in target names
+3. **Review monitor logs** regularly for security events
+4. **Limit strategy access** to trusted users only
+5. **Use HTTPS** in production deployments
