@@ -873,7 +873,7 @@ Logs are also written to:
        │
        ▼
 ┌─────────────┐
-│ Auto Analysi│ ◄─── Scans for issues
+│Auto Analysis│ ◄─── Scans for issues
 └──────┬──────┘
        │
        ▼

@@ -285,7 +285,7 @@ app.post('/api/brain/auto-fix', async (req, res) => {
     res.status(500).json({
       success: false,
       error: getErrorMessage(error),
-      logs: [`Error during auto-fix: ${error.message}`]
+      logs: [`Error during auto-fix: ${getErrorMessage(error)}`]
     });
   }
 });

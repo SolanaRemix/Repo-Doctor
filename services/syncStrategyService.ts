@@ -28,7 +28,7 @@ export class SyncStrategyService {
 
   constructor(rootPath?: string, config?: SyncConfiguration) {
     this.rootPath = rootPath || process.cwd();
-    this.brainPath = path.join(this.rootPath, '.repo-brain');
+    this.brainPath = path.join(this.rootPath, SAFE_CONFIG_DIR);
     this.activeStrategies = new Map();
     this.monitors = new Map();
     this.intervals = new Map();
@@ -484,15 +484,19 @@ export class SyncStrategyService {
     };
     this.activeStrategies.set(strategyId, updatedStrategy);
 
-    // Restart scheduled sync if it was running
-    if (strategy.mode === 'scheduled' && this.intervals.has(strategyId)) {
-      this.stopScheduledSync(strategyId);
-      if (updatedStrategy.enabled && updatedStrategy.mode === 'scheduled') {
-        const result = await this.startScheduledSync(strategyId);
-        if (!result.success) {
-          return result;
-        }
+    // Ensure scheduled sync state matches updated strategy
+    if (updatedStrategy.enabled && updatedStrategy.mode === 'scheduled' && updatedStrategy.interval) {
+      // If an interval is already running, restart it with the updated configuration
+      if (this.intervals.has(strategyId)) {
+        this.stopScheduledSync(strategyId);
       }
+      const result = await this.startScheduledSync(strategyId);
+      if (!result.success) {
+        return result;
+      }
+    } else if (this.intervals.has(strategyId)) {
+      // Stop scheduled sync if strategy is no longer scheduled or disabled
+      this.stopScheduledSync(strategyId);
     }
 
     this.log('info', `Strategy updated: ${strategyId}`);
