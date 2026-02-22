@@ -367,16 +367,31 @@ export class SyncStrategyService {
     // Create .repo-brain directory
     await fs.mkdir(targetBrainPath, { recursive: true });
     
+    // Ensure rsync is available before attempting to sync
+    try {
+      await execFileAsync('rsync', ['--version']);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Required dependency "rsync" is not available on this system. Please install rsync and try again. Original error: ${message}`
+      );
+    }
+
     // Copy brain scripts using execFile (safe from command injection)
-    await execFileAsync('rsync', [
-      '-a',
-      `${this.brainPath}/`,
-      `${targetBrainPath}/`,
-      '--exclude',
-      '.git'
-    ], {
-      cwd: this.rootPath
-    });
+    try {
+      await execFileAsync('rsync', [
+        '-a',
+        `${this.brainPath}/`,
+        `${targetBrainPath}/`,
+        '--exclude',
+        '.git'
+      ], {
+        cwd: this.rootPath
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to sync plugins using rsync: ${message}`);
+    }
     
     logs.push(`Synced plugins to ${target}`);
   }
