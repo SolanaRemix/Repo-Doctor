@@ -282,10 +282,11 @@ app.post('/api/brain/auto-fix', async (req, res) => {
       }
     });
   } catch (error: unknown) {
+    const errorMessage = getErrorMessage(error);
     res.status(500).json({
       success: false,
-      error: getErrorMessage(error),
-      logs: [`Error during auto-fix: ${getErrorMessage(error)}`]
+      error: errorMessage,
+      logs: [`Error during auto-fix: ${errorMessage}`]
     });
   }
 });
