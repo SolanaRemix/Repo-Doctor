@@ -360,7 +360,7 @@ Save synchronization configuration to a file.
 **Request Body:**
 ```json
 {
-  "configPath": "/path/to/sync-config.json"
+  "configPath": "sync-config.json"
 }
 ```
 
