@@ -335,12 +335,12 @@ Get monitoring status for all strategies.
 
 **POST** `/api/sync/config/load`
 
-Load synchronization configuration from a file.
+Load synchronization configuration from a file located in your repository's `.repo-brain` directory. Only relative filenames are allowed; absolute paths are rejected.
 
 **Request Body:**
 ```json
 {
-  "configPath": "/path/to/sync-config.json"
+  "configPath": "sync-config.json"
 }
 ```
 
