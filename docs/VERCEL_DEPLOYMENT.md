@@ -252,10 +252,11 @@ Edit `vercel.json` to add:
 **Issue**: API endpoints return 404 or 502
 
 **Solution**:
-1. Check `vercel.json` routing configuration
-2. Verify `api/index.ts` exports the Express app
-3. Check Vercel function logs for errors
+1. Check `vercel.json` routing configuration and confirm which file is configured as the entrypoint (for this project, typically `server.ts`).
+2. Verify that the entrypoint file (for example, `server.ts`) correctly exposes the Express app or handler used by Vercel routing. If `server.ts` starts its own `app.listen(...)`, be aware this is a traditional Node server pattern rather than the standard Vercel serverless function pattern.
+3. Check Vercel function or server logs for errors, depending on how the entrypoint is configured.
 
+**Note on Express and serverless behavior**: On Vercel, the typical pattern is to export a request handler (e.g., an Express app) from an API file without calling `app.listen`, allowing Vercel to manage the HTTP server and scale functions on demand. If your `server.ts` file starts its own listener and relies on in-memory schedulers or monitors (such as `setInterval` jobs), those tasks may not be reliable across deployments, cold starts, or scaling events. For durable scheduling and monitoring in production, prefer external schedulers (e.g., Vercel cron jobs, GitHub Actions, or third-party schedulers) and external storage/queues instead of in-memory state.
 ### Environment Variables
 
 **Issue**: Missing configuration or API keys
