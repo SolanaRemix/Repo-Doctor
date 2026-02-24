@@ -27,7 +27,7 @@
     {
       "src": "/api/public/(.*)",
       "dest": "/server.ts",
-      "methods": ["GET"]
+      "methods": ["GET", "OPTIONS"]
     },
     {
       "src": "/api/brain/(.*)",
