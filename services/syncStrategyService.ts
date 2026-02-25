@@ -315,13 +315,40 @@ export class SyncStrategyService {
           }
         }
       } else {
-        // Run full fleet sync using execFile (safer than exec)
+        // Run full fleet sync using execFile (safer than exec) when the script is available
         logs.push('Running full fleet synchronization');
-        const { stdout, stderr } = await execFileAsync('bash', [fleetScript, '--sync-plugins'], {
-          cwd: this.rootPath,
-          env: { ...process.env, JQ_BIN: 'jq' }
-        });
 
+        // Ensure the fleet script exists before attempting to execute it. In some
+        // serverless environments (e.g. Vercel) deployment artifacts may not
+        // preserve executable bits or include the .repo-brain directory at all.
+        try {
+          await fs.access(fleetScript);
+        } catch {
+          logs.push(`Fleet script not available at ${fleetScript}. Skipping fleet synchronization.`);
+          throw new Error('Fleet synchronization is not supported in this runtime environment.');
+        }
+
+        let stdout = '';
+        let stderr = '';
+
+        try {
+          const result = await execFileAsync('bash', [fleetScript, '--sync-plugins'], {
+            cwd: this.rootPath,
+            env: { ...process.env, JQ_BIN: 'jq' }
+          });
+
+          stdout = result.stdout ?? '';
+          stderr = result.stderr ?? '';
+        } catch (error: any) {
+          // If the shell or script cannot be executed (e.g. missing `bash` in a
+          // constrained serverless runtime), surface a clear, controlled failure
+          // instead of an unhandled ENOENT from child_process.
+          if ((error as any).code === 'ENOENT') {
+            logs.push('Fleet synchronization is not available: required shell or script is missing in this environment.');
+            throw new Error('Fleet synchronization is not supported in this runtime environment.');
+          }
+          throw error;
+        }
         if (stdout) {
           const lines = stdout.split('\n').filter(Boolean);
           logs.push(...lines);
