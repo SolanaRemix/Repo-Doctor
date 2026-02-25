@@ -418,22 +418,23 @@ export class SyncStrategyService {
       return { success: false, error: 'Interval not specified for scheduled strategy' };
     }
 
-    // Clear existing interval if any
-    this.stopScheduledSync(strategyId);
+    // In serverless environments (e.g. Vercel), long-lived in-memory timers such as
+    // setInterval are not reliable because function instances are short-lived and
+    // state is not shared across invocations. Instead of starting an in-process
+    // scheduler here, callers should configure an external scheduler (e.g. Vercel
+    // Cron) to invoke a route that calls `executeSync` for this strategy.
+    this.log(
+      'warn',
+      `Scheduled sync requested for strategy "${strategy.name}" (${strategyId}), ` +
+      'but in-process scheduling is disabled in this deployment. ' +
+      'Use an external scheduler (e.g. Vercel Cron) to trigger executeSync instead.'
+    );
 
-    // Start new interval
-    const intervalMs = strategy.interval * 1000;
-    const interval = setInterval(() => {
-      this.executeSync(strategyId, 'interval').catch(error => {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        this.log('error', `Scheduled sync error for ${strategyId}: ${message}`);
-      });
-    }, intervalMs);
-
-    this.intervals.set(strategyId, interval);
-    this.log('info', `Scheduled sync started for ${strategy.name} (every ${strategy.interval}s)`);
-    
-    return { success: true };
+    return {
+      success: false,
+      error: 'In-process scheduled syncs are not supported in this deployment. ' +
+             'Configure an external scheduler to trigger executeSync for this strategy.'
+    };
   }
 
   /**
