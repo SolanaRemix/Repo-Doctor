@@ -296,7 +296,7 @@ export class SyncStrategyService {
     let itemsFailed = 0;
 
     // Check if we're syncing plugins or running fleet operations
-    const fleetScript = path.join(this.brainPath, 'brain.fleet.sh');
+    const fleetScript = path.join(this.rootPath, 'brain.fleet.sh');
     
     try {
       // Sync plugins first if targets are specified
