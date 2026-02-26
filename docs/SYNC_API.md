@@ -97,35 +97,36 @@ Get public system status and health metrics (read-only, no authentication requir
 }
 ```
 
-### Brain Operations
+    ### Brain Operations (Privileged)
 
-#### Auto-Fix
+    #### Auto-Fix
 
-**POST** `/api/brain/auto-fix`
+    **POST** `/api/brain/auto-fix` (authenticated, privileged)
 
-Run full analysis, repair, and apply patches automatically. This endpoint executes diagnosis, doctor, surgeon, and verify phases in sequence.
+    Run full analysis, repair, and apply patches automatically. This endpoint executes diagnosis, doctor, surgeon, and verify phases in sequence.
 
-**Response:**
-```json
-{
-  "success": true,
-  "logs": [
-    "🔧 Starting automatic analysis and repair...",
-    "📊 Running diagnosis...",
-    "🩺 Running health check...",
-    "🔧 Applying repairs...",
-    "✅ Verifying fixes...",
-    "✅ Automatic fix completed"
-  ],
-  "phases": {
-    "diagnosis": true,
-    "doctor": true,
-    "surgeon": true,
-    "verify": true
-  }
-}
-```
+    **Authentication & Authorization:** This is a **non-public, high-privilege** operation. It **MUST** be protected by strong authentication (for example, signed JWT, OAuth2 access token, or mTLS) and role-based authorization (for example, `admin` or `maintainer` roles). It **MUST NOT** be exposed to unauthenticated clients or the public internet. Requests without valid credentials or sufficient privileges **MUST** be rejected with `401 Unauthorized` or `403 Forbidden`.
 
+    **Response:**
+    ```json
+    {
+      "success": true,
+      "logs": [
+        "🔧 Starting automatic analysis and repair...",
+        "📊 Running diagnosis...",
+        "🩺 Running health check...",
+        "🔧 Applying repairs...",
+        "✅ Verifying fixes...",
+        "✅ Automatic fix completed"
+      ],
+      "phases": {
+        "diagnosis": true,
+        "doctor": true,
+        "surgeon": true,
+        "verify": true
+      }
+    }
+    ```
 ### Register a Strategy
 
 **POST** `/api/sync/strategy`
