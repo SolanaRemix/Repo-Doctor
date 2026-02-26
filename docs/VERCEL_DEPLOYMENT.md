@@ -25,6 +25,10 @@ This guide explains how to deploy the Repo-Doctor application to Vercel with aut
 - Runs full analysis, repair, and verification
 - Executes: diagnosis → doctor → surgeon → verify
 - Returns detailed logs and phase results
+- **Privileged operation – MUST NOT be exposed as a public, unauthenticated endpoint**
+- Require strong authentication/authorization (for example, a signed token or API key checked in middleware)
+- Recommended: restrict access to a private network or trusted automation only (e.g., Vercel cron jobs, GitHub Actions over VPN)
+- Do not enable permissive CORS or document this as a public browser-facing API
 
 ### 3. Automatic Configuration
 
