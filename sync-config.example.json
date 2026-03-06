@@ -1,0 +1,44 @@
+{
+  "strategies": [
+    {
+      "id": "fleet-realtime-sync",
+      "name": "Fleet Real-time Synchronization",
+      "mode": "realtime",
+      "enabled": true,
+      "maxRetries": 3,
+      "retryDelay": 2000
+    },
+    {
+      "id": "scheduled-plugin-sync",
+      "name": "Scheduled Plugin Synchronization",
+      "mode": "scheduled",
+      "enabled": false,
+      "interval": 3600,
+      "maxRetries": 5,
+      "retryDelay": 1000,
+      "targets": [
+        "repo1",
+        "repo2",
+        "repo3"
+      ]
+    },
+    {
+      "id": "on-demand-sync",
+      "name": "On-Demand Full Sync",
+      "mode": "on-demand",
+      "enabled": true,
+      "maxRetries": 3,
+      "retryDelay": 1500
+    }
+  ],
+  "globalRetryPolicy": {
+    "maxRetries": 3,
+    "retryDelay": 1000,
+    "backoffMultiplier": 2
+  },
+  "monitoring": {
+    "enabled": true,
+    "logLevel": "info",
+    "alertThreshold": 5
+  }
+}

@@ -2,22 +2,67 @@
   "version": 2,
   "builds": [
     {
+      "src": "server.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          ".repo-brain/**",
+          "services/**",
+          "types.ts"
+        ]
+      }
+    },
+    {
       "src": "package.json",
-      "use": "@vercel/next"
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     }
   ],
   "env": {
-    "FLEET_ROOT": "../../", 
     "NODE_ENV": "production"
   },
   "routes": [
     {
+      "src": "/api/public/(.*)",
+      "dest": "/server.ts",
+      "methods": ["GET", "OPTIONS"]
+    },
+    {
+      "src": "/api/brain/(.*)",
+      "dest": "/server.ts"
+    },
+    {
+      "src": "/api/sync/(.*)",
+      "dest": "/server.ts"
+    },
+    {
       "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "dest": "/server.ts"
     },
     {
       "src": "/(.*)",
-      "dest": "/"
+      "dest": "/dist/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/public/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=60, s-maxage=300"
+        }
+      ]
     }
   ]
 }
