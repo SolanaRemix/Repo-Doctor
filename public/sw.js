@@ -38,8 +38,36 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for app shell
+  // Cache-first for app shell and runtime caching for other same-origin GET requests
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      return fetch(event.request).then((networkResponse) => {
+        // If we didn't get a valid response, just pass it through without caching
+        if (
+          !networkResponse ||
+          networkResponse.status !== 200 ||
+          networkResponse.type !== 'basic'
+        ) {
+          return networkResponse;
+        }
+
+        // Only cache same-origin requests
+        const requestUrl = new URL(event.request.url);
+        if (requestUrl.origin !== self.location.origin) {
+          return networkResponse;
+        }
+
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+
+        return networkResponse;
+      });
+    })
   );
 });

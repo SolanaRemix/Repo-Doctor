@@ -57,5 +57,12 @@
 <body class="bg-slate-950 text-slate-50 min-h-screen selection:bg-blue-500/30">
     <div id="root"></div>
 <script type="module" src="/index.tsx"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js');
+    });
+  }
+</script>
 </body>
 </html>

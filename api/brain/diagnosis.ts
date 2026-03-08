@@ -11,6 +11,11 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET, OPTIONS');
+    return res.status(405).json({ success: false, error: 'Method Not Allowed' });
+  }
+
   try {
     const diagnosisPath = path.join(process.cwd(), '.repo-brain', 'diagnosis.json');
     if (fs.existsSync(diagnosisPath)) {
