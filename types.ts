@@ -131,3 +131,76 @@ export interface FleetData {
   generatedAt: string;
   repos: Diagnosis[];
 }
+
+// Advanced Synchronization Strategy Types
+export type SyncMode = 'realtime' | 'scheduled' | 'manual' | 'on-demand';
+export type SyncStatus = 'idle' | 'syncing' | 'success' | 'failed' | 'retrying';
+export type SyncTrigger = 'push' | 'commit' | 'interval' | 'webhook' | 'api';
+
+export interface SyncStrategyConfig {
+  id: string;
+  name: string;
+  mode: SyncMode;
+  enabled: boolean;
+  interval?: number; // in seconds for scheduled mode
+  maxRetries?: number;
+  retryDelay?: number; // in milliseconds
+  targets?: string[]; // target repos or paths
+  filters?: SyncFilter[];
+}
+
+export interface SyncStrategy extends SyncStrategyConfig {
+  // Runtime-only callbacks (not serializable)
+  onSuccess?: (result: SyncResult) => void;
+  onError?: (error: SyncError) => void;
+}
+
+export interface SyncFilter {
+  type: 'include' | 'exclude';
+  pattern: string;
+  scope?: 'files' | 'repos' | 'directories';
+}
+
+export interface SyncResult {
+  strategyId: string;
+  status: SyncStatus;
+  timestamp: string;
+  duration: number; // in milliseconds
+  itemsSynced: number;
+  itemsFailed: number;
+  repos?: string[];
+  logs: string[];
+  error?: SyncError;
+}
+
+export interface SyncError {
+  code: string;
+  message: string;
+  timestamp: string;
+  retry?: boolean;
+  details?: unknown;
+}
+
+export interface SyncMonitor {
+  strategyId: string;
+  status: SyncStatus;
+  currentProgress: number;
+  totalItems: number;
+  startTime: string;
+  lastUpdate: string;
+  logs: string[];
+}
+
+export interface SyncConfiguration {
+  strategies: SyncStrategy[];
+  globalRetryPolicy?: {
+    maxRetries: number;
+    retryDelay: number;
+    backoffMultiplier?: number;
+  };
+  monitoring?: {
+    enabled: boolean;
+    logLevel: 'debug' | 'info' | 'warn' | 'error';
+    alertThreshold?: number;
+  };
+}

@@ -11,7 +11,8 @@
     "server": "node --loader ts-node/esm server.ts",
     "server:dev": "nodemon --exec node --loader ts-node/esm server.ts",
     "pack:win": "pkg . --targets node18-win-x64 --output brain.exe",
-    "deploy:vercel": "vercel --prod"
+    "deploy:vercel": "vercel --prod",
+    "vercel-build": "vite build"
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
