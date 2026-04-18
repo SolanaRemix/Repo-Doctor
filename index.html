@@ -40,6 +40,47 @@
 
         /* Prevent text zoom on orientation change */
         html { -webkit-text-size-adjust: 100%; }
+
+        /* ── Neo Glow Flash Effects ── */
+        @keyframes neon-pulse {
+          0%, 100% { box-shadow: 0 0 6px #3b82f6, 0 0 18px #3b82f6, 0 0 36px rgba(59,130,246,0.4); }
+          50%       { box-shadow: 0 0 12px #3b82f6, 0 0 36px #3b82f6, 0 0 72px rgba(59,130,246,0.6); }
+        }
+        @keyframes neon-text-flash {
+          0%, 100% { text-shadow: 0 0 4px #fff, 0 0 10px #3b82f6, 0 0 20px #3b82f6; }
+          50%       { text-shadow: 0 0 6px #fff, 0 0 22px #3b82f6, 0 0 44px #3b82f6, 0 0 66px rgba(59,130,246,0.5); }
+        }
+        @keyframes neon-green {
+          0%, 100% { box-shadow: 0 0 6px #10b981, 0 0 18px #10b981, 0 0 36px rgba(16,185,129,0.3); }
+          50%       { box-shadow: 0 0 10px #10b981, 0 0 30px #10b981, 0 0 60px rgba(16,185,129,0.5); }
+        }
+        @keyframes neon-rose {
+          0%, 100% { box-shadow: 0 0 6px #f43f5e, 0 0 18px #f43f5e, 0 0 36px rgba(244,63,94,0.3); }
+          50%       { box-shadow: 0 0 10px #f43f5e, 0 0 30px #f43f5e, 0 0 60px rgba(244,63,94,0.5); }
+        }
+        @keyframes border-flow {
+          0%   { border-color: #3b82f6; }
+          33%  { border-color: #8b5cf6; }
+          66%  { border-color: #10b981; }
+          100% { border-color: #3b82f6; }
+        }
+        .neon-glow        { animation: neon-pulse 2.4s ease-in-out infinite; }
+        .neon-text        { animation: neon-text-flash 2.4s ease-in-out infinite; }
+        .neon-green       { animation: neon-green 2s ease-in-out infinite; }
+        .neon-rose        { animation: neon-rose 2s ease-in-out infinite; }
+        .neon-border-flow { animation: border-flow 4s linear infinite; border-width: 1px; border-style: solid; }
+        .neo-card {
+          background: rgba(2,6,23,0.75);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(59,130,246,0.18);
+          box-shadow: 0 0 0 1px rgba(59,130,246,0.06), inset 0 1px 0 rgba(255,255,255,0.04);
+          transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        .neo-card:hover {
+          border-color: rgba(59,130,246,0.45);
+          box-shadow: 0 0 24px rgba(59,130,246,0.2), inset 0 0 24px rgba(59,130,246,0.04);
+        }
     </style>
 <script type="importmap">
 {
