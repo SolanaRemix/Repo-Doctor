@@ -41,7 +41,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for app shell and runtime caching for other same-origin GET requests
+  // For SPA navigation requests: network-first, fall back to cached /index.html when offline
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() =>
+        caches.match('/index.html').then(
+          (cached) =>
+            cached ||
+            new Response('Offline', {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: { 'Content-Type': 'text/plain' },
+            })
+        )
+      )
+    );
+    return;
+  }
+
+  // Cache-first for static assets (scripts, styles, images, fonts); skip caching HTML
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -49,7 +67,7 @@ self.addEventListener('fetch', (event) => {
       }
 
       return fetch(event.request).then((networkResponse) => {
-        // If we didn't get a valid response, just pass it through without caching
+        // Only cache valid same-origin, non-HTML responses (static assets)
         if (
           !networkResponse ||
           networkResponse.status !== 200 ||
@@ -58,9 +76,8 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         }
 
-        // Only cache same-origin requests
-        const requestUrl = new URL(event.request.url);
-        if (requestUrl.origin !== self.location.origin) {
+        const contentType = networkResponse.headers.get('Content-Type') || '';
+        if (contentType.includes('text/html')) {
           return networkResponse;
         }
 
