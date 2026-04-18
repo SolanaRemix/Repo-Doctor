@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { RepoStatus, Diagnosis, AutopsyReport, Framework } from './types';
-import { FLEET_SUMMARY, MOCK_HEALTH_REPORT, MOCK_GENOME, MOCK_AUTOPSY, MOCK_IMMUNIZER, MOCK_VITALS, MOCK_BLACKBOX, MOCK_FIREWALL, SYSTEM_VERSION } from './constants';
+import { FLEET_SUMMARY, MOCK_HEALTH_REPORT, MOCK_GENOME, MOCK_AUTOPSY, MOCK_IMMUNIZER, MOCK_VITALS, MOCK_BLACKBOX, MOCK_FIREWALL, SYSTEM_VERSION, MERMEDA_PHASES } from './constants';
 import RepoCard from './components/RepoCard';
 import SmartBrainTerminal from './components/SmartBrainTerminal';
 import HealthReportModal from './components/HealthReportModal';
@@ -24,6 +24,14 @@ const TAB_CONFIG: { id: TabId; label: string; icon: string }[] = [
   { id: 'admin',   label: 'Admin', icon: '🛡️' },
   { id: 'dev',     label: 'Dev',   icon: '⚙️' },
   { id: 'user',    label: 'Fleet', icon: '🚀' },
+];
+
+const MOCK_DEV_LOGS = [
+  '🔍 Scanning...',
+  '✅ Phase 1: detect — OK',
+  '✅ Phase 2: scan-actions — OK',
+  '⚠️ Phase 13: neural.bridge — WARN',
+  '✅ Phase 18: test-suite — OK',
 ];
 
 const App: React.FC = () => {
@@ -226,7 +234,7 @@ const App: React.FC = () => {
           <div className="mt-10 neo-card rounded-2xl md:rounded-[3rem] p-6 sm:p-10">
             <h3 className="text-xs font-black uppercase tracking-[0.4em] text-slate-500 mb-6">Hospital Pipeline · 18 Phases</h3>
             <div className="flex flex-wrap gap-2">
-              {['detect','scan-actions','frameworks','frameworks.ci','solidity.detect','solidity.ci','rust','normalize','diagnose','fix.safe','verify','ai.guard','neural.bridge','motor.function','greenlock','guard','fleet','test-suite'].map((p, i) => (
+              {MERMEDA_PHASES.map((p, i) => (
                 <span key={p} className="px-3 py-1 bg-blue-600/10 border border-blue-500/20 rounded-full text-[9px] sm:text-[10px] font-mono font-bold text-blue-400 tracking-wide">
                   {i + 1}. {p}
                 </span>
@@ -430,7 +438,7 @@ const App: React.FC = () => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
-                { label: 'Run Logs', icon: '📋', action: () => setActiveLogs(['🔍 Scanning...', '✅ Phase 1: detect — OK', '✅ Phase 2: scan-actions — OK', '⚠️ Phase 13: neural.bridge — WARN', '✅ Phase 18: test-suite — OK']) },
+                { label: 'Run Logs', icon: '📋', action: () => setActiveLogs(MOCK_DEV_LOGS) },
                 { label: 'Brain Doctor', icon: '🩺', action: () => toggleModal('health') },
                 { label: 'Stack Vitals', icon: '📊', action: () => toggleModal('vitals') },
                 { label: 'Blackbox', icon: '📼', action: () => toggleModal('blackbox') },
