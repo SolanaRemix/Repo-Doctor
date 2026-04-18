@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { RepoStatus, Diagnosis, AutopsyReport, Framework } from './types';
-import { FLEET_SUMMARY, MOCK_HEALTH_REPORT, MOCK_GENOME, MOCK_AUTOPSY, MOCK_IMMUNIZER, MOCK_VITALS, MOCK_BLACKBOX, MOCK_FIREWALL, SYSTEM_VERSION } from './constants';
+import { FLEET_SUMMARY, MOCK_HEALTH_REPORT, MOCK_GENOME, MOCK_AUTOPSY, MOCK_IMMUNIZER, MOCK_VITALS, MOCK_BLACKBOX, MOCK_FIREWALL, SYSTEM_VERSION, MERMEDA_PHASES } from './constants';
 import RepoCard from './components/RepoCard';
 import SmartBrainTerminal from './components/SmartBrainTerminal';
 import HealthReportModal from './components/HealthReportModal';
@@ -17,7 +17,25 @@ import ScanBox from './components/ScanBox';
 import { RepoBrainAI } from './services/geminiService';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
+type TabId = 'landing' | 'admin' | 'dev' | 'user';
+
+const TAB_CONFIG: { id: TabId; label: string; icon: string }[] = [
+  { id: 'landing', label: 'Home',  icon: '🏠' },
+  { id: 'admin',   label: 'Admin', icon: '🛡️' },
+  { id: 'dev',     label: 'Dev',   icon: '⚙️' },
+  { id: 'user',    label: 'Fleet', icon: '🚀' },
+];
+
+const MOCK_DEV_LOGS = [
+  '🔍 Scanning...',
+  '✅ Phase 1: detect — OK',
+  '✅ Phase 2: scan-actions — OK',
+  '⚠️ Phase 13: neural.bridge — WARN',
+  '✅ Phase 18: test-suite — OK',
+];
+
 const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabId>('landing');
   const [fleet, setFleet] = useState(FLEET_SUMMARY.repos);
   const [statusFilter, setStatusFilter] = useState<RepoStatus | 'ALL'>('ALL');
   const [frameworkFilter, setFrameworkFilter] = useState<Framework | 'ALL'>('ALL');
@@ -147,6 +165,88 @@ const App: React.FC = () => {
         </div>
       </header>
 
+      {/* ── Tab Navigation Bar ── */}
+      <nav className="mb-8 md:mb-12 flex gap-1 sm:gap-2 p-1 sm:p-1.5 neo-card rounded-2xl sm:rounded-[2rem] overflow-x-auto">
+        {TAB_CONFIG.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 min-w-[72px] flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-4 rounded-xl sm:rounded-[1.5rem] text-[9px] sm:text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${
+              activeTab === tab.id
+                ? 'bg-blue-600 text-white neon-glow'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
+            }`}
+          >
+            <span className="text-base sm:text-lg">{tab.icon}</span>
+            <span className="hidden sm:inline">{tab.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* ── LANDING TAB ── */}
+      {activeTab === 'landing' && (
+        <section className="mb-16">
+          {/* Hero */}
+          <div className="relative neo-card rounded-2xl md:rounded-[4rem] p-8 sm:p-14 md:p-24 mb-10 overflow-hidden neon-border-flow">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-indigo-600/5 to-emerald-600/10 pointer-events-none" />
+            <div className="relative z-10 text-center max-w-4xl mx-auto">
+              <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 mx-auto bg-gradient-to-br from-indigo-600 via-blue-600 to-emerald-600 rounded-[2rem] sm:rounded-[3rem] flex items-center justify-center text-4xl sm:text-6xl md:text-8xl shadow-2xl neon-glow mb-8">
+                🧠
+              </div>
+              <h2 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter text-white uppercase italic mb-4 neon-text">
+                REPO BRAIN
+              </h2>
+              <p className="text-sm sm:text-lg md:text-2xl text-slate-400 font-medium mb-10 leading-relaxed">
+                Autonomous Multi‑Repo Governance Engine for Modern Engineering Fleets.<br/>
+                <span className="text-blue-400">Scan • Diagnose • Repair • Deploy</span>
+              </p>
+              <div className="flex flex-wrap gap-4 justify-center">
+                <button onClick={() => setActiveTab('admin')} className="px-8 sm:px-12 py-3 sm:py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl sm:rounded-[2rem] text-xs sm:text-sm font-black uppercase tracking-widest transition-all active:scale-95 neon-glow">
+                  Admin Dashboard
+                </button>
+                <button onClick={() => setActiveTab('dev')} className="px-8 sm:px-12 py-3 sm:py-5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl sm:rounded-[2rem] text-xs sm:text-sm font-black uppercase tracking-widest transition-all active:scale-95 border border-slate-700">
+                  Dev Console
+                </button>
+                <button onClick={() => setActiveTab('user')} className="px-8 sm:px-12 py-3 sm:py-5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl sm:rounded-[2rem] text-xs sm:text-sm font-black uppercase tracking-widest transition-all active:scale-95 neon-green">
+                  Fleet View
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              { icon: '🏥', title: '18-Phase Pipeline', desc: 'Deterministic hospital pipeline from detect to fleet — every repo treated, every invariant locked.', color: 'text-blue-400', glow: 'neon-glow' },
+              { icon: '🤖', title: 'AI Remediation', desc: 'CyberAI Oracle generates surgical PRs, predicts failures, and wires repair loops autonomously.', color: 'text-indigo-400', glow: '' },
+              { icon: '🛡️', title: 'Safety Wall', desc: 'Firewall blocks unsafe patterns, secrets, and injection vectors before they reach production.', color: 'text-rose-400', glow: 'neon-rose' },
+              { icon: '🚀', title: 'Fleet Orchestration', desc: 'Govern 1 repo or 500. Health index, framework detection, CI repair, and green-lock across every node.', color: 'text-emerald-400', glow: 'neon-green' },
+            ].map(f => (
+              <div key={f.title} className={`neo-card rounded-2xl p-6 sm:p-8 flex flex-col gap-4 ${f.glow}`}>
+                <span className="text-4xl">{f.icon}</span>
+                <h3 className={`text-sm font-black uppercase tracking-widest ${f.color}`}>{f.title}</h3>
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Pipeline phases */}
+          <div className="mt-10 neo-card rounded-2xl md:rounded-[3rem] p-6 sm:p-10">
+            <h3 className="text-xs font-black uppercase tracking-[0.4em] text-slate-500 mb-6">Hospital Pipeline · 18 Phases</h3>
+            <div className="flex flex-wrap gap-2">
+              {MERMEDA_PHASES.map((p, i) => (
+                <span key={p} className="px-3 py-1 bg-blue-600/10 border border-blue-500/20 rounded-full text-[9px] sm:text-[10px] font-mono font-bold text-blue-400 tracking-wide">
+                  {i + 1}. {p}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── ADMIN TAB (full hospital dashboard) ── */}
+      {activeTab === 'admin' && (
+        <>
       {/* Ticker System */}
       <div className="mb-8 md:mb-12 glass border border-slate-800/60 rounded-xl md:rounded-[2.5rem] py-3 md:py-6 px-4 md:px-10 overflow-hidden flex items-center gap-3 sm:gap-6 shadow-2xl relative">
         <div className="absolute inset-0 bg-blue-500/5 pointer-events-none"></div>
@@ -325,6 +425,105 @@ const App: React.FC = () => {
       <section id="admission-scan" className="mb-24 md:mb-32">
         <ScanBox onScanTrigger={(logs) => setActiveLogs(logs)} />
       </section>
+        </>
+      )}
+
+      {/* ── DEV TAB ── */}
+      {activeTab === 'dev' && (
+        <section className="mb-16 space-y-8">
+          <div className="neo-card rounded-2xl md:rounded-[3rem] p-6 sm:p-10 neon-border-flow">
+            <h2 className="text-xl sm:text-3xl font-black uppercase tracking-tight text-white mb-6 flex items-center gap-3">
+              <span className="w-3 h-3 bg-blue-500 rounded-full neon-glow inline-block" />
+              Dev Console — Technical Operations
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { label: 'Run Logs', icon: '📋', action: () => setActiveLogs(MOCK_DEV_LOGS) },
+                { label: 'Brain Doctor', icon: '🩺', action: () => toggleModal('health') },
+                { label: 'Stack Vitals', icon: '📊', action: () => toggleModal('vitals') },
+                { label: 'Blackbox', icon: '📼', action: () => toggleModal('blackbox') },
+                { label: 'Genome Map', icon: '🧬', action: () => toggleModal('genome') },
+                { label: 'Autopsy', icon: '🔪', action: () => { setSelectedAutopsy(MOCK_AUTOPSY); toggleModal('autopsy'); } },
+                { label: 'Safety Wall', icon: '🔥', action: () => toggleModal('firewall') },
+                { label: 'Integrity', icon: '🛡️', action: () => toggleModal('immunizer') },
+                { label: 'Oracle Audit', icon: '🤖', action: handleFleetAnalysis },
+              ].map(op => (
+                <button key={op.label} onClick={op.action}
+                  className="flex items-center gap-4 p-5 neo-card rounded-xl hover:neon-glow transition-all active:scale-95 text-left group">
+                  <span className="text-3xl group-hover:scale-110 transition-transform">{op.icon}</span>
+                  <span className="text-xs font-black uppercase tracking-widest text-slate-200">{op.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="neo-card rounded-2xl p-6 sm:p-10">
+            <h3 className="text-xs font-black uppercase tracking-[0.4em] text-slate-500 mb-6">Fleet System Status</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { label: 'Green / Healthy', val: counts[RepoStatus.GREEN], color: 'text-emerald-400', glow: 'neon-green' },
+                { label: 'Auto-Fixable', val: counts[RepoStatus.AUTO_FIXABLE], color: 'text-amber-400', glow: '' },
+                { label: 'Critical', val: counts[RepoStatus.RED], color: 'text-rose-400', glow: 'neon-rose' },
+              ].map(s => (
+                <div key={s.label} className={`neo-card rounded-xl p-6 flex flex-col gap-2 ${s.glow}`}>
+                  <span className={`text-5xl font-black ${s.color}`}>{s.val}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{s.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div id="admission-scan-dev">
+            <ScanBox onScanTrigger={(logs) => setActiveLogs(logs)} />
+          </div>
+
+          {fleetStrategy && (
+            <div className="neo-card rounded-2xl p-6 sm:p-10 border border-blue-500/20">
+              <div className="text-[9px] font-black uppercase tracking-[0.3em] text-blue-400 mb-3">AI Strategic Analysis</div>
+              <p className="text-sm text-blue-200 italic leading-relaxed">{fleetStrategy}</p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── USER / FLEET TAB ── */}
+      {activeTab === 'user' && (
+        <section className="mb-16 space-y-8">
+          {/* Simplified health summary */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { label: 'Healthy', val: counts[RepoStatus.GREEN], color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', glow: 'neon-green' },
+              { label: 'Auto-Fix', val: counts[RepoStatus.AUTO_FIXABLE], color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20', glow: '' },
+              { label: 'Critical', val: counts[RepoStatus.RED], color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20', glow: 'neon-rose' },
+            ].map(s => (
+              <div key={s.label} className={`neo-card border rounded-2xl p-6 sm:p-8 flex flex-col items-center gap-2 ${s.bg} ${s.glow}`}>
+                <span className={`text-6xl sm:text-8xl font-black ${s.color}`}>{s.val}</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{s.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Fleet grid – same cards, no filters UI */}
+          <div className="neo-card rounded-2xl md:rounded-[3rem] p-4 sm:p-8">
+            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-slate-500 mb-6 flex items-center gap-3">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full neon-green inline-block" />
+              Fleet Registry · {fleet.length} repos
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+              {fleet.map(repo => (
+                <RepoCard
+                  key={repo.repo}
+                  repo={repo}
+                  onViewLogs={(logs) => setActiveLogs(logs)}
+                  onViewAutopsy={(report) => { setSelectedAutopsy(report); toggleModal('autopsy'); }}
+                  onOpenActionModal={(repo) => { setSelectedActionRepo(repo); toggleModal('workflow'); }}
+                  onPRCreated={handlePRCreated}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <footer className="pt-16 md:pt-24 pb-24 md:pb-48 border-t border-slate-900 text-center flex flex-col items-center">
         <div className="flex flex-wrap gap-4 sm:gap-8 lg:gap-16 justify-center opacity-40 grayscale hover:grayscale-0 transition-all mb-8 md:mb-12">

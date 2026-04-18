@@ -198,3 +198,38 @@ Repo‑brain audits and repairs:
 .sh .ps1
 
 .env .env.local
+
+---
+
+# 🖥️ Dashboard Screenshots
+
+The dashboard ships with **4 tabs** — a public landing page, a full admin control panel, a developer console, and a simplified fleet view — all styled with Neo Glow flash effects.
+
+---
+
+### 🛡️ Admin Tab — Mission Control & Fleet Overview
+> Real-time oracle feed, fleet status filters (Critical / Drift / Nominal), fleet integrity distribution, and the repo registry search panel.
+
+![Admin – Mission Control](https://github.com/user-attachments/assets/7bddfd7d-b761-4614-9a13-b35f56a277f2)
+
+---
+
+### 🛡️ Admin Tab — Repo Cards · 18-Phase Pipeline Grid
+> Each repo card shows its health index, framework, status badge, and the full 18-phase MERMEDA pipeline with per-phase pass/fail indicators. Run Logs, YAML, Oracle, and Vercel quick-action buttons are shown inline.
+
+![Admin – Repo Cards](https://github.com/user-attachments/assets/3064b1ea-ded8-422e-99f4-50b1af932764)
+
+---
+
+### 🛡️ Admin Tab — Surgery Station & Hospital Admission Portal
+> One-click access to Brain Doctor, Safety Wall, Blackbox, Stack Vitals, Autopsy, Genome Map, Integrity, Protocol, and Bot Surgeon. The Admission Portal lets you scan any repo or PR on-demand.
+
+![Admin – Surgery Station](https://github.com/user-attachments/assets/bb53218d-62a1-4988-b620-e22ef08afbe2)
+
+---
+
+### 📊 Full Dashboard — Complete Scrollable View
+> The complete scrollable Hospital v2.2 command center showing Mission Control, fleet repo grid, Surgery Station, and the Scan Admission Portal — all in one view with Neo Glow effects.
+
+![Full Dashboard](https://github.com/user-attachments/assets/edf1ff51-0b47-493e-8d66-79449e01cec6)
+
