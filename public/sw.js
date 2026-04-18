@@ -22,17 +22,20 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests for same-origin or CDN assets
+  // Only handle GET requests; runtime caching below is limited to same-origin requests
   if (event.request.method !== 'GET') return;
 
   // Network-first for API calls
   if (event.request.url.includes('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() =>
-        new Response(JSON.stringify({ error: 'Offline - API unavailable' }), {
-          headers: { 'Content-Type': 'application/json' },
-          status: 503,
-        })
+        new Response(
+          JSON.stringify({ success: false, error: 'Offline - API unavailable' }),
+          {
+            headers: { 'Content-Type': 'application/json' },
+            status: 503,
+          }
+        )
       )
     );
     return;
